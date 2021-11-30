@@ -1,7 +1,8 @@
 from flask import Flask, request
-from ServerUser import User
+from ServerUser import User, UserStore
 
 app = Flask(__name__)
+store = UserStore()
 
 @app.route("/")
 def hello_world():
@@ -9,12 +10,8 @@ def hello_world():
 
 @app.route("/signup", methods=["POST"])
 def signup():
-    params = {
-        "username": request.get_json().get("username"),
-        "identity": request.get_json().get("identity"),
-        "pk_sig": request.get_json().get("pk_sig"),
-        "signed_pk": request.get_json().get("signed_pk"),
-        "prekeys": request.get_json().get("prekeys")
-    }
+    try:
+        store.signup(request.data)
+    except Exception e:
+        print(e)
     
-    user = User(params["username"], params["identity"], params["pk_sig"], params["signed_pk"], params["prekeys"])
