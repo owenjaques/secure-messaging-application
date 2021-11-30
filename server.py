@@ -12,6 +12,6 @@ def hello_world():
 def signup():
     try:
         store.signup(request.data)
-    except Exception e:
+    except Exception as e:
         print(e)
     
