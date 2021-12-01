@@ -15,11 +15,19 @@ def signup():
     try:
         data = {
             "username":     request.form.get("username"),
+            "password":     request.form.get("password"),
             "identity":     request.form.get("identity"),
             "pk_sig":       request.form.get("pk_sig"),
-            "signed_pk":    request.form.get("signed_pk"),
-            "prekeys":      request.form.getlist("prekeys")
+            "signed_pk":    request.form.get("signed_pk")
         }
+
+        # Prekey formatting is fucked, even entries are the index for the next odd entry
+        pk_list = request.form.getlist("prekeys")
+        prekeys = []
+        for i in range(0, len(pk_list), 2):
+            prekeys.append((i, pk_list[i+1]))
+        data["prekeys"] = prekeys
+
         for k,v in data.items():
             if v == None:
                 return Response(f"Missing key {k}")
@@ -31,11 +39,12 @@ def signup():
     
 @app.route("/keybundle/<username>", methods=["GET"])
 def keybundle(username):
-    with store.get_user(username) as user:
-        if user:
-            return jsonify(user.get_keybundle())
-        else:
-            return Response(f"User {username} not found")
+    user = store.get_user(username)
+    if user:
+        return jsonify(user.get_keybundle())
+    else:
+        return Response(f"User {username} not found")
+    
 
 
 if __name__ == "__main__":

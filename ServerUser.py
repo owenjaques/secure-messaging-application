@@ -2,6 +2,7 @@ import json
 
 class User:
     username = None
+    password = None
     identity = None
     pk_sig = None
     signed_pk = None
@@ -9,11 +10,13 @@ class User:
 
     def __init__(self, 
                 username, 
+                password,
                 identity,
                 pk_sig,
                 signed_pk,
                 prekeys):
         self.username = username
+        self.password = password
         self.identity = identity
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
@@ -24,6 +27,7 @@ class User:
     def to_dict(self):
         return {
                 "username":     self.username,
+                "password":     self.password,
                 "identity":     self.identity,
                 "pk_sig":       self.pk_sig,
                 "signed_pk":    self.signed_pk,
@@ -33,6 +37,7 @@ class User:
     @staticmethod
     def from_dict(user_dict):
         return User(user_dict["username"],
+                    user_dict["password"],
                     user_dict["identity"],
                     user_dict["pk_sig"],
                     user_dict["signed_pk"],
@@ -79,12 +84,13 @@ class UserStore:
         print(f"User {user.username} written to disk")
 
     def signup(self, user_dict):
-        user = User.from_dict(user_dict)
-        self.write_user(user)
+        if not self.get_user(user_dict['username']):
+            user = User.from_dict(user_dict)
+            self.write_user(user)
 
-        userstore_dict = {
-            user_dict["username"]:  user_dict
-        }
-        self._userstore.update(userstore_dict)
+            userstore_dict = {
+                user_dict["username"]:  user_dict
+            }
+            self._userstore.update(userstore_dict)
         
         
