@@ -14,6 +14,7 @@ def hello_world():
 def signup():
     try:
         store.signup(request.data)
+        return "Success"
     except Exception as e:
         print(e)
     
