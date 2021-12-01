@@ -52,14 +52,14 @@ class UserStore:
     def get_user(self, username):
         if username in self._userstore.keys():
             return User.from_dict(self._userstore[username])
-        else:
-            return None
+        
+        return None
 
     def write_user(self, user):
-        # Insert user into db
+        # Insert/update user in db
         with open("users.json", "r+") as f:
             file_data = json.load(f)
-            file_data.update(user)
+            file_data.update({user["username"]: user})
             f.seek(0)
             json.dump(file_data, f)
     
@@ -68,4 +68,10 @@ class UserStore:
     def signup(self, user_dict):
         user = User.from_dict(user_dict)
         self.write_user(user)
+
+        userstore_dict = {
+            user_dict["username"]:  user_dict
+        }
+        self._userstore.update(userstore_dict)
+        
         
