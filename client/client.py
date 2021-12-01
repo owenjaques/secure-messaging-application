@@ -8,12 +8,13 @@ import requests
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
+CONST_SERVER_URL = 'http://127.0.0.1:5000'
 CONST_ONE_TIME_KEYS_NUM = 100
 
 class Client:
 	def __init__(self):
 		self.username = input('Username: ')
-		# TODO: time permitting add username duplicate verification with server
+		self.password = input('Password: ')
 
 		print('Generating keys ...')
 		self.generate_keys()
@@ -35,13 +36,25 @@ class Client:
 	def publish_keys(self):
 		data = {}
 		data['username'] = self.username
+		data['password'] = self.password
 		data['identity'] = self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
 		data['pk_sig'] = self.pk_sig.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
 		data['signed_pk'] = self.spk_sig
 		data['prekeys'] = []
-		for key in self.ot_pks:
-			data['prekeys'].append(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw))
+		for i, key in enumerate(self.ot_pks):
+			data['prekeys'].append((i, key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)))
 		
-		return requests.post('http://127.0.0.1:5000/signup', data=data)
+		return requests.post(CONST_SERVER_URL + '/signup', data=data)
+
+	def send_text_message(self, to, text):
+		r = requests.get(CONST_SERVER_URL + '/keybundle/' + to)
+		if r.status_code != 200:
+			raise Exception(r.text)
+		
+		# key_bundle = r.json()
+		# id_key = Ed25519PublicKey.from_public_bytes(key_bundle['identity'])
+		# pk_sig = Ed25519PublicKey.from_public_bytes(key_bundle['pk_sig'])
+
 
 client = Client()
+client.send_text_message('test', 'text test')
