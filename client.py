@@ -5,7 +5,6 @@
 # Signal protocol for x3df: https://signal.org/docs/specifications/x3dh/
 
 import requests
-import json
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
@@ -20,7 +19,9 @@ class Client:
 		self.generate_keys()
 			
 		print('Sending key bundle to server')
-		self.publish_keys()
+		r = self.publish_keys()
+		if r.status_code != 200:
+			raise Exception(r.text)
 
 	def generate_keys(self):
 		self.id_key = Ed25519PrivateKey.generate()
@@ -41,6 +42,6 @@ class Client:
 		for key in self.ot_pks:
 			data['prekeys'].append(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw))
 		
-		requests.post('http://127.0.0.1:5000/signup', data=data)
+		return requests.post('http://127.0.0.1:5000/signup', data=data)
 
 client = Client()
