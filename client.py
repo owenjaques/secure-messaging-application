@@ -41,6 +41,6 @@ class Client:
 		for key in self.ot_pks:
 			data['prekeys'].append(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw))
 		
-		requests.post('localhost:80/signup', data=data)
+		requests.post('http://127.0.0.1:5000/signup', data=data)
 
 client = Client()
