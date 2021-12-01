@@ -17,7 +17,7 @@ class User:
         self.identity = identity
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
-        self.prekeys = prekeys
+        self.prekeys = prekeys # List of tuples (idx, prekey)
 
         print(f"User init complete with {len(prekeys)} prekeys")
 
@@ -38,6 +38,19 @@ class User:
                     user_dict["signed_pk"],
                     user_dict["prekeys"])
 
+    def get_keybundle(self):
+        """
+            Returns a dict representing a key bundle for the first message between users
+        """
+        key_idx, prekey = self.prekeys[0]
+        del(self.prekeys[0])
+        return {
+            "identity":     self.identity,
+            "pk_sig":       self.pk_sig,
+            "signed_pk":    self.signed_pk,
+            "prekey":       prekey,
+            "prekey_idx":   key_idx
+        }
 
 class UserStore:
     _userstore = dict()
@@ -59,11 +72,11 @@ class UserStore:
         # Insert/update user in db
         with open("users.json", "r+") as f:
             file_data = json.load(f)
-            file_data.update({user["username"]: user})
+            file_data.update({user.username: user.to_dict()})
             f.seek(0)
             json.dump(file_data, f)
     
-        print(f"User {user['username']} written to disk")
+        print(f"User {user.username} written to disk")
 
     def signup(self, user_dict):
         user = User.from_dict(user_dict)
