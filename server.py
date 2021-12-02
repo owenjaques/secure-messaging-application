@@ -45,7 +45,18 @@ def keybundle(username):
     else:
         return Response(f"User {username} not found")
     
+@app.route("/send", methods=["POST"])
+def send_message():
+    pass
 
+@app.route("/inbox", methods=["POST"])
+def check_inbox():
+    """
+    POST params:
+        Username
+        Password
+        Unread/all messages
+    """
 
 if __name__ == "__main__":
     app.run(port=5000)
