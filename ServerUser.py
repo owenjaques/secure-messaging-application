@@ -1,4 +1,5 @@
 import json
+from MessageBox import MessageBox
 
 class User:
     username = None
@@ -7,6 +8,8 @@ class User:
     pk_sig = None
     signed_pk = None
     prekeys = None
+    message_box = None
+    message_box_path = None
 
     def __init__(self, 
                 username, 
@@ -14,15 +17,27 @@ class User:
                 identity,
                 pk_sig,
                 signed_pk,
-                prekeys):
+                prekeys,
+                message_box_path = None):
         self.username = username
         self.password = password
         self.identity = identity
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
         self.prekeys = prekeys # List of tuples (idx, prekey)
+        if message_box_path:
+            self.load_message_box(message_box_path)
 
         print(f"User init complete with {len(prekeys)} prekeys")
+
+    def load_message_box(self, path):
+        """
+            TODO: Loads messages from disk and constructs a messagebox object
+        """
+        pass
+
+    def receive_message(self, message):
+        self.message_box.add(message)
 
     def to_dict(self):
         return {

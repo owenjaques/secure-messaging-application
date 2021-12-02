@@ -2,6 +2,8 @@
 
 from flask import Flask, request, Response, jsonify
 from ServerUser import User, UserStore
+from Message import Message
+from datetime import datetime as dt
 
 app = Flask(__name__)
 store = UserStore()
@@ -47,7 +49,25 @@ def keybundle(username):
     
 @app.route("/send", methods=["POST"])
 def send_message():
-    pass
+    try:
+        sender = request.form.get("from")
+        recepient = request.form.get("to")
+        text = request.form.get("message")
+        is_image = request.form.get("is_image")
+
+        # TODO: check if recepient and sender exist in userstore
+        user = store.get_user(recepient)
+        user.receive_message(Message(recepient=recepient,
+                                    sender=sender,
+                                    ciphertext=text,
+                                    is_image=is_image,
+                                    timestamp=dt.now().strftime("%d/%m/%Y %H:%M:%S")))
+
+        return Response("Message sent")
+        
+
+    except Exception as e:
+        print(e)
 
 @app.route("/inbox", methods=["POST"])
 def check_inbox():
