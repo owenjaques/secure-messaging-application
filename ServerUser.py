@@ -25,16 +25,10 @@ class User:
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
         self.prekeys = prekeys # List of tuples (idx, prekey)
-        if message_box_path:
-            self.load_message_box(message_box_path)
+        self.message_box = MessageBox(self.message_box_path)
 
         print(f"User init complete with {len(prekeys)} prekeys")
 
-    def load_message_box(self, path):
-        """
-            TODO: Loads messages from disk and constructs a messagebox object
-        """
-        pass
 
     def receive_message(self, message):
         self.message_box.add(message)
@@ -57,6 +51,11 @@ class User:
                     user_dict["pk_sig"],
                     user_dict["signed_pk"],
                     user_dict["prekeys"])
+
+
+    def validate_password(self, password):
+        assert self.password == password, "Invalid password"
+
 
     def get_keybundle(self):
         """

@@ -77,6 +77,27 @@ def check_inbox():
         Password
         Unread/all messages
     """
+    try:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        to_check = request.form.get("to_get")
+
+        user = store.get_user(username)
+        try:
+            user.validate_password(password)
+        except Exception:
+            return Response("Invalid password", status=401)
+
+        if to_check == "all":
+            return jsonify(user.message_box.fetch_all)
+        elif to_check == "new":
+            return jsonify(user.message_box.fetch_new)
+
+            
+
+    except Exception as e:
+        print(e)
+
 
 if __name__ == "__main__":
     app.run(port=5000)
