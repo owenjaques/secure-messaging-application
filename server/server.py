@@ -2,6 +2,8 @@
 
 from flask import Flask, request, Response, jsonify
 from ServerUser import User, UserStore
+import sys
+sys.path.append("../shared/")
 from Message import Message
 from datetime import datetime as dt
 
@@ -51,13 +53,13 @@ def keybundle(username):
 @app.route("/send", methods=["POST"])
 def send_message():
     try:
-        sender = request.form.get("from")
+        sender = request.form.get("sender")
         identity = request.form.get("identity_key")
         ephemeral_key = request.form.get("ephemeral_key")
-        recepient = request.form.get("to")
-        text = request.form.get("message")
+        recepient = request.form.get("recepient")
+        text = request.form.get("ciphertext")
         is_image = request.form.get("is_image")
-        pk_idx = request.form.get("prekey_index")
+        pk_idx = request.form.get("pk_idx")
 
         # TODO: check if recepient and sender exist in userstore
         user = store.get_user(recepient)

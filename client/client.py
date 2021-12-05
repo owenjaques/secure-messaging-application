@@ -14,13 +14,18 @@ sending/receiving messages. Implementing this is out of scope for this prototype
 """
 
 import json
+from ujson import dumps, loads
 import requests
+from os import path
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import sys
+sys.path.append("../shared/")
+from Message import Message
 
 CONST_SERVER_URL = 'http://127.0.0.1:5000'
 CONST_ONE_TIME_KEYS_NUM = 100
@@ -104,16 +109,36 @@ class Client:
 		cipher_text = encryptor.update(encode_text) + encryptor.finalize()
 
 		# send the encrypted text as well as the eph key to the server
-		data = {}
-		data['from'] = self.username
-		data['identity_key'] = self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
-		data['ephemeral_key'] = eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
-		data['to'] = to
-		data['prekey_index'] = key_bundle['prekey_idx']
-		data['message'] = cipher_text
-		data['is_image'] = False
+		# data = {}
+		# data['from'] = self.username
+		# data['identity_key'] = self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
+		# data['ephemeral_key'] = eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
+		# data['to'] = to
+		# data['prekey_index'] = key_bundle['prekey_idx']
+		# data['message'] = cipher_text
+		# data['is_image'] = False
 
-		return requests.post(CONST_SERVER_URL + '/send', data=data)
+		msg = Message(
+			recepient=to,
+			sender=self.username,
+			sender_identity_key=self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
+			ephemeral_key=eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
+			ciphertext=cipher_text,
+			pk_idx=key_bundle['prekey_idx'],
+			is_image=False
+		)
+
+		return requests.post(CONST_SERVER_URL + '/send', data=msg.to_dict())
+
+	def save_message(self, msg):
+		# Decrypt/create message store
+		file_name = f"messages_{self.username}.json"
+		if path.exists(file_name):
+			with open(file_name, 'r+') as f:
+				enc_data = f.read()
+				# TODO
+
+
 
 
 if __name__ == '__main__':
