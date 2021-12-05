@@ -136,9 +136,9 @@ def check_inbox():
             return Response("Invalid password", status=401)
 
         if to_check == "all":
-            return jsonify(user.message_box.fetch_all)
+            return jsonify(user.message_box.fetch_all())
         elif to_check == "new":
-            return jsonify(user.message_box.fetch_new)
+            return jsonify(user.message_box.fetch_new())
 
             
 

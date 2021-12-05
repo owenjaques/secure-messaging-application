@@ -109,14 +109,54 @@ class Client:
 		data['identity_key'] = self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
 		data['ephemeral_key'] = eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
 		data['to'] = to
-		data['prekey_index'] = key_bundle['prekey_idx']
-		data['message'] = cipher_text
+		data['prekey_index'] = key_bundle['prekey_idx'] 
+		data['message'] = cipher_text.hex()
 		data['is_image'] = False
 
 		return requests.post(CONST_SERVER_URL + '/send', data=data)
 
+	def check_inbox(self):
+		data = {'username': self.username, 'password': self.password, 'to_get': 'new'};
+		r = requests.post(CONST_SERVER_URL + '/inbox', data=data)
+		if r.status_code != 200:
+			raise Exception(r.text)
+		
+		bundle = json.loads(r.text)
+		for message in bundle:
+			self.decrypt_message(message)
+
+	def decrypt_message(self, message):
+		cipher_text = bytes.fromhex(message['ciphertext'])
+		eph_key = X25519PublicKey.from_public_bytes(bytes.fromhex(message['ephemeral_key']))
+		sender_id_key = X25519PublicKey.from_public_bytes(bytes.fromhex(message['sender_identity_key']))
+		pk_idx = int(message['pk_idx'])
+		prekey_used = self.ot_pks[pk_idx]
+
+		# generate the shared key used to encrypt the cipher text
+		dh1 = self.pk_sig.exchange(sender_id_key)
+		dh2 = self.id_key.exchange(eph_key)
+		dh3 = self.pk_sig.exchange(eph_key)
+		dh4 = prekey_used.exchange(eph_key)
+
+		hkdf_input = b'\xff'*32 + dh1 + dh2 + dh3 + dh4
+		shared_key = HKDF(hashes.SHA256(), 32, b'\0'*32, b'shared key').derive(hkdf_input)
+
+		# delete one time pre key for forward secrecy
+		self.ot_pks[pk_idx] = None
+
+		# Finally decrypt the text with the computed shared key
+		cipher = Cipher(algorithms.AES(shared_key), modes.CBC(b'\0'*16))
+		decryptor = cipher.decryptor()
+		byte_text = decryptor.update(cipher_text) + decryptor.finalize()
+		
+		# unpad and decode text
+		text = byte_text.split(b'\0')[0].decode('utf-8')
+
+		print('New message from ' + message['sender'] + ': ' + text)
 
 if __name__ == '__main__':
-	client = Client()
-	client.send_text_message('alice', 'text test')
+	alice = Client()
+	bob = Client()
+	bob.send_text_message('alice', 'this is a test')
+	alice.check_inbox()
 	pass
