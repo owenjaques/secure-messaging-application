@@ -18,6 +18,7 @@ class User:
                 pk_sig,
                 signed_pk,
                 prekeys,
+                burnt_prekeys = [],
                 message_box_path = None):
         self.username = username
         self.password = password
@@ -25,6 +26,7 @@ class User:
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
         self.prekeys = prekeys # List of tuples (idx, prekey)
+        self.burnt_prekeys = burnt_prekeys
         self.message_box = MessageBox(self.message_box_path)
 
         print(f"User init complete with {len(prekeys)} prekeys")
@@ -40,7 +42,8 @@ class User:
                 "identity":     self.identity,
                 "pk_sig":       self.pk_sig,
                 "signed_pk":    self.signed_pk,
-                "prekeys":      self.prekeys
+                "prekeys":      self.prekeys,
+                "burnt_prekeys": self.burnt_prekeys
             }
 
     @staticmethod
@@ -50,7 +53,8 @@ class User:
                     user_dict["identity"],
                     user_dict["pk_sig"],
                     user_dict["signed_pk"],
-                    user_dict["prekeys"])
+                    user_dict["prekeys"],
+                    user_dict["burnt_prekeys"])
 
 
     def validate_password(self, password):
@@ -62,6 +66,7 @@ class User:
             Returns a dict representing a key bundle for the first message between users
         """
         key_idx, prekey = self.prekeys[0]
+        self.burnt_prekeys.append(self.prekeys[0])
         del(self.prekeys[0])
         return {
             "identity":     self.identity,
@@ -86,6 +91,13 @@ class UserStore:
             return User.from_dict(self._userstore[username])
         
         return None
+
+    def get_all_users(self):
+        """
+        Returns a dict of all users objects
+        """
+        users = [self.get_user(username) for username in self._userstore.keys()]
+        return users
 
     def write_user(self, user):
         # Insert/update user in db

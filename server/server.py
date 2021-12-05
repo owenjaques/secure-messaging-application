@@ -69,6 +69,24 @@ def send_message():
     except Exception as e:
         print(e)
 
+@app.route("/keys", methods=["GET"])
+def published_keys():
+    """
+    Displays a list of published keys and the userpair.
+    A key is published after a message has been encrypted with it
+    """
+    html = ""
+    for user in store.get_all_users():
+        html += f"<h3>{user.username}</h3><br>"
+        for key in user.burnt_prekeys:
+            html += f"<p>{key[1]}</p><br>"
+
+        html += "<br><br><br>"
+
+    return html
+
+
+
 @app.route("/inbox", methods=["POST"])
 def check_inbox():
     """
