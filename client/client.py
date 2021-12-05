@@ -37,7 +37,7 @@ class Client:
 		self.username = input('Username: ')
 		self.password = input('Password: ') 
 
-		if not os.path.exists(f"messages_{self.username}.json"):
+		if not path.exists(f"messages_{self.username}.json"):
 			with open(f"messages_{self.username}.json", "w") as f:
 				f.write("{}")
 
