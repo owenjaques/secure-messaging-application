@@ -18,7 +18,7 @@ class User:
                 pk_sig,
                 signed_pk,
                 prekeys,
-                burnt_prekeys = [],
+                burnt_keys = [],
                 message_box_path = None):
         self.username = username
         self.password = password
@@ -26,7 +26,7 @@ class User:
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
         self.prekeys = prekeys # List of tuples (idx, prekey)
-        self.burnt_prekeys = burnt_prekeys
+        self.burnt_keys = burnt_keys
         self.message_box = MessageBox(self.message_box_path)
 
         print(f"User init complete with {len(prekeys)} prekeys")
@@ -43,7 +43,7 @@ class User:
                 "pk_sig":       self.pk_sig,
                 "signed_pk":    self.signed_pk,
                 "prekeys":      self.prekeys,
-                "burnt_prekeys": self.burnt_prekeys
+                "burnt_keys":   self.burnt_keys
             }
 
     @staticmethod
@@ -54,7 +54,7 @@ class User:
                     user_dict["pk_sig"],
                     user_dict["signed_pk"],
                     user_dict["prekeys"],
-                    user_dict["burnt_prekeys"])
+                    user_dict["burnt_keys"])
 
 
     def validate_password(self, password):
@@ -66,7 +66,6 @@ class User:
             Returns a dict representing a key bundle for the first message between users
         """
         key_idx, prekey = self.prekeys[0]
-        self.burnt_prekeys.append(self.prekeys[0])
         del(self.prekeys[0])
         return {
             "identity":     self.identity,

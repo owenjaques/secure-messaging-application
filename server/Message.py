@@ -5,6 +5,8 @@ from datetime import datetime as dt
 class Message():
     recepient: str
     sender: str
+    sender_identity_key: str
+    ephemeral_key: str
     ciphertext: str
     is_image: bool
     timestamp: str

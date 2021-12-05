@@ -51,6 +51,8 @@ def keybundle(username):
 def send_message():
     try:
         sender = request.form.get("from")
+        identity = request.form.get("identity_key")
+        ephemeral_key = request.form.get("ephemeral_key")
         recepient = request.form.get("to")
         text = request.form.get("message")
         is_image = request.form.get("is_image")
@@ -59,6 +61,8 @@ def send_message():
         user = store.get_user(recepient)
         user.receive_message(Message(recepient=recepient,
                                     sender=sender,
+                                    sender_identity_key=identity,
+                                    ephemeral_key=ephemeral_key,
                                     ciphertext=text,
                                     is_image=is_image,
                                     timestamp=dt.now().strftime("%d/%m/%Y %H:%M:%S")))
@@ -78,14 +82,36 @@ def published_keys():
     html = ""
     for user in store.get_all_users():
         html += f"<h3>{user.username}</h3><br>"
-        for key in user.burnt_prekeys:
+        for key in user.burnt_keys:
             html += f"<p>{key[1]}</p><br>"
 
         html += "<br><br><br>"
 
     return html
 
+@app.route("/publishkey")
+def publish_key():
+    """
+    POST params:
+        Username
+        Password
+        key to publish
+    """
+    try:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        key = request.form.get("key")
 
+        user = store.get_user(username)
+        try:
+            user.validate_password(password)
+        except Exception:
+            return Response("Invalid password", status=401)
+            
+        user.burnt_keys.append(key)
+
+    except Exception as e:
+        print(e)
 
 @app.route("/inbox", methods=["POST"])
 def check_inbox():
