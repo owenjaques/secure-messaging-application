@@ -19,7 +19,6 @@ def signup():
             "username":     request.form.get("username"),
             "password":     request.form.get("password"),
             "identity":     request.form.get("identity"),
-            "signing_id":   request.form.get("signing_id"),
             "pk_sig":       request.form.get("pk_sig"),
             "signed_pk":    request.form.get("signed_pk")
         }
