@@ -57,6 +57,7 @@ def send_message():
         recepient = request.form.get("to")
         text = request.form.get("message")
         is_image = request.form.get("is_image")
+        pk_idx = request.form.get("prekey_index")
 
         # TODO: check if recepient and sender exist in userstore
         user = store.get_user(recepient)
@@ -65,6 +66,7 @@ def send_message():
                                     sender_identity_key=identity,
                                     ephemeral_key=ephemeral_key,
                                     ciphertext=text,
+                                    pk_idx=pk_idx,
                                     is_image=is_image,
                                     timestamp=dt.now().strftime("%d/%m/%Y %H:%M:%S")))
 

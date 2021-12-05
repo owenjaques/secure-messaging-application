@@ -42,7 +42,7 @@ class User:
                 "username":     self.username,
                 "password":     self.password,
                 "identity":     self.identity,
-                "signing_id": self.signing_id,
+                "signing_id":   self.signing_id,
                 "pk_sig":       self.pk_sig,
                 "signed_pk":    self.signed_pk,
                 "prekeys":      self.prekeys,
