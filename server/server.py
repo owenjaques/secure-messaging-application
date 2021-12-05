@@ -21,7 +21,6 @@ def signup():
             "username":     request.form.get("username"),
             "password":     request.form.get("password"),
             "identity":     request.form.get("identity"),
-            "signing_id":   request.form.get("signing_id"),
             "pk_sig":       request.form.get("pk_sig"),
             "signed_pk":    request.form.get("signed_pk")
         }
@@ -138,9 +137,9 @@ def check_inbox():
             return Response("Invalid password", status=401)
 
         if to_check == "all":
-            return jsonify(user.message_box.fetch_all)
+            return jsonify(user.message_box.fetch_all())
         elif to_check == "new":
-            return jsonify(user.message_box.fetch_new)
+            return jsonify(user.message_box.fetch_new())
 
             
 

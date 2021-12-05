@@ -15,7 +15,6 @@ class User:
                 username, 
                 password,
                 identity,
-                signing_id,
                 pk_sig,
                 signed_pk,
                 prekeys,
@@ -24,7 +23,6 @@ class User:
         self.username = username
         self.password = password
         self.identity = identity
-        self.signing_id = signing_id
         self.pk_sig = pk_sig
         self.signed_pk = signed_pk
         self.prekeys = prekeys # List of tuples (idx, prekey)
@@ -42,7 +40,6 @@ class User:
                 "username":     self.username,
                 "password":     self.password,
                 "identity":     self.identity,
-                "signing_id":   self.signing_id,
                 "pk_sig":       self.pk_sig,
                 "signed_pk":    self.signed_pk,
                 "prekeys":      self.prekeys,
@@ -54,7 +51,6 @@ class User:
         return User(user_dict["username"],
                     user_dict["password"],
                     user_dict["identity"],
-                    user_dict["signing_id"],
                     user_dict["pk_sig"],
                     user_dict["signed_pk"],
                     user_dict["prekeys"],
@@ -73,7 +69,6 @@ class User:
         del(self.prekeys[0])
         return {
             "identity":     self.identity,
-            "signing_id":   self.signing_id,
             "pk_sig":       self.pk_sig,
             "signed_pk":    self.signed_pk,
             "prekey":       prekey,
