@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # important links
-# Cryptography docs on asymmetric keys being used: https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/
+# Cryptography docs on asymmetric keys being used: https://cryptography.io/en/latest/hazmat/primitives/
 # Signal protocol for x3df: https://signal.org/docs/specifications/x3dh/
 
 """
