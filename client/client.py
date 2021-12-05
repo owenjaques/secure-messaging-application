@@ -14,7 +14,6 @@ sending/receiving messages. Implementing this is out of scope for this prototype
 """
 
 import json
-from ujson import dumps, loads
 import requests
 from os import path
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
