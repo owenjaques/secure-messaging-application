@@ -114,12 +114,14 @@ class Client:
 		hkdf_input = b'\xff'*32 + dh1 + dh2 + dh3 + dh4
 		shared_key = HKDF(hashes.SHA256(), 32, b'\0'*32, b'shared key').derive(hkdf_input)
 
+		# pad string to 16 bytes
+		padding_needed = 16 - (len(byte_str) % 16)
+		for _ in range(padding_needed):
+			byte_str += bytes([padding_needed])
+		
 		# Finally encrypt the text with the computed shared key
 		cipher = Cipher(algorithms.AES(shared_key), modes.CBC(b'\0'*16))
 		encryptor = cipher.encryptor()
-
-		while len(byte_str) % 16 != 0:
-			byte_str += b'\0'
 		cipher_text = encryptor.update(byte_str) + encryptor.finalize()
 
 		msg = Message(
@@ -210,7 +212,8 @@ class Client:
 		byte_text = decryptor.update(cipher_text) + decryptor.finalize()
 		
 		# unpad text
-		byte_text = byte_text.split(b'\0')[0]
+		padding_used = byte_text[-1]
+		byte_text = byte_text[:-padding_used]
 		
 		if message['is_image']:
 			with open('attachement.png', 'wb') as f:
