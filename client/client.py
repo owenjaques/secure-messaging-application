@@ -33,9 +33,9 @@ CONST_SERVER_URL = 'http://127.0.0.1:5000'
 CONST_ONE_TIME_KEYS_NUM = 100
 
 class Client:
-	def __init__(self):
-		self.username = input('Username: ')
-		self.password = input('Password: ') 
+	def __init__(self, username = None, password=None):
+		self.username = username or input('Username: ')
+		self.password = password or input('Password: ') 
 
 		if not path.exists(f"messages_{self.username}.json"):
 			with open(f"messages_{self.username}.json", "w") as f:
@@ -160,7 +160,8 @@ class Client:
 
 			# Re-encrypt message store after appending message
 			encryptor = cipher.encryptor()
-			enc = encryptor.update(json.dumps(messages).encode('utf-8')) + encryptor.finalize()
+			needed_padding = (len(json.dumps(messages).encode('utf-8')) % 16) + 16
+			enc = encryptor.update(json.dumps(messages).encode('utf-8') + str(needed_padding).encode('utf-8')*needed_padding) + encryptor.finalize()
 
 			f.seek(0)
 			f.write(enc)
@@ -175,10 +176,13 @@ class Client:
 		
 		bundle = json.loads(r.text)
 		for message in bundle:
-			plaintext, is_image = self.decrypt_message(message)
+			plaintext = self.decrypt_message(message)
 			msg = Message.from_dict(message)
 			self.save_message(msg)
-			print('New message from ' + message['sender'] + ': ' + plaintext)
+			if message['is_image']:
+				print(f'New picture message from {message["sender"]}')
+			else:
+				print('New message from ' + message['sender'] + ': ' + plaintext)
 			#TODO build Message object, pass to save_message
 
 	def decrypt_message(self, message):
@@ -215,7 +219,7 @@ class Client:
 		else:
 			text = byte_text.decode('utf-8')
 
-		return text, message['is_image']
+		return text
 
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
@@ -255,9 +259,9 @@ end of borrowed functions from https://github.com/pyca/cryptography/issues/5557
 """
 
 if __name__ == '__main__':
-	alice = Client()
-	bob = Client()
-	bob.send_text_message('alice', 'this is a test')
+	alice = Client('alice', 'test')
+	bob = Client('bob', 'test')
+	#bob.send_text_message('alice', 'this is a test')
 	bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
 	pass

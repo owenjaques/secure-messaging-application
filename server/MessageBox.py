@@ -10,10 +10,10 @@ class MessageBox:
         self.load_messages(message_box_path)
 
     def fetch_new(self):
-        return [i for i in self._messages if not i.read]
+        return [i.view() for i in self._messages if not i.read]
 
     def fetch_all(self):
-        return self._messages
+        return [i.view() for i in self._messages]
 
     def add(self, msg):
         self._messages.append(msg)

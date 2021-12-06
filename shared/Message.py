@@ -14,6 +14,10 @@ class Message():
     timestamp: str = None
     read: bool = False
 
+    def view(self):
+        self.read = True
+        return self
+
     def to_dict(self):
         return {
             "recepient": self.recepient,
