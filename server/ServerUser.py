@@ -99,6 +99,7 @@ class UserStore:
         return users
 
     def write_user(self, user):
+        return # TODO:  REMOTE THIS LINE BEFORE RELEASE PLEASE
         # Insert/update user in db
         with open("users.json", "r+") as f:
             file_data = json.load(f)

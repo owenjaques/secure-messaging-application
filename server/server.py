@@ -53,7 +53,7 @@ def keybundle(username):
 def send_message():
     try:
         sender = request.form.get("sender")
-        identity = request.form.get("identity_key")
+        identity = request.form.get("sender_identity_key")
         ephemeral_key = request.form.get("ephemeral_key")
         recepient = request.form.get("recepient")
         text = request.form.get("ciphertext")

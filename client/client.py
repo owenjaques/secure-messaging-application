@@ -130,7 +130,7 @@ class Client:
 			sender=self.username,
 			sender_identity_key=self.encrypt_id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
 			ephemeral_key=eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
-			ciphertext=cipher_text,
+			ciphertext=cipher_text.hex(),
 			pk_idx=key_bundle['prekey_idx'],
 			is_image=False
 		)
@@ -140,29 +140,35 @@ class Client:
 	def save_message(self, msg):
 		# Decrypt/create message store
 		file_name = f"messages_{self.username}.json"
-		with open(file_name, 'w+') as f:
-			enc_data = f.read()
 
+		with open(file_name, 'wb+') as f:
+			enc_data = f.read()
 			pw_padding = (16 - len(self.password)) * "a"
 			pw = self.password + pw_padding
-			cipher = Cipher(algorithms.AES(pw), modes.CBC(b'\0'*16))
-			decryptor = cipher.decryptor()
-			dec = decryptor.update(enc_data) + decryptor.finalize()
+			cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
+
+			if len(enc_data) > 0:
+				decryptor = cipher.decryptor()
+				dec = decryptor.update(enc_data) + decryptor.finalize()
+			else:
+				# File is empty
+				dec = '{"messages": []}'
+
 			try:
 				messages = json.loads(dec)
 			except:
 				print("Error decrypting messages file!")
 
-			messages.append(msg.to_dict())
+			messages["messages"].append(msg.to_dict())
 
 			# Re-encrypt message store after appending message
 			encryptor = cipher.encryptor()
-			enc = encryptor.update(json.dumps(messages)) + encryptor.finalize()
+			enc = encryptor.update(json.dumps(messages).encode('utf-8')) + encryptor.finalize()
 
 			f.seek(0)
 			f.write(enc)
 
-
+		return
 
 	def check_inbox(self):
 		data = {'username': self.username, 'password': self.password, 'to_get': 'new'}
@@ -172,7 +178,10 @@ class Client:
 		
 		bundle = json.loads(r.text)
 		for message in bundle:
-			self.decrypt_message(message)
+			plaintext = self.decrypt_message(message)
+			msg = Message.from_dict(message)
+			self.save_message(msg)
+			print('New message from ' + message['sender'] + ': ' + plaintext)
 			#TODO build Message object, pass to save_message
 
 	def decrypt_message(self, message):
@@ -202,7 +211,7 @@ class Client:
 		# unpad and decode text
 		text = byte_text.split(b'\0')[0].decode('utf-8')
 
-		print('New message from ' + message['sender'] + ': ' + text)
+		return text
 
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
