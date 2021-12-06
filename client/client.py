@@ -37,10 +37,6 @@ class Client:
 		self.username = username or input('Username: ')
 		self.password = password or input('Password: ') 
 
-		if not path.exists(f"messages_{self.username}.json"):
-			with open(f"messages_{self.username}.json", "w") as f:
-				f.write("{}")
-
 		print('Generating keys ...')
 		self.generate_keys()
 			
@@ -147,6 +143,8 @@ class Client:
 			cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
 
 			if len(enc_data) > 0:
+				# unpad text
+				enc_data = enc_data[:-enc_data[-1]]
 				decryptor = cipher.decryptor()
 				dec = decryptor.update(enc_data) + decryptor.finalize()
 			else:
@@ -161,14 +159,47 @@ class Client:
 			messages["messages"].append(msg.to_dict())
 
 			# Re-encrypt message store after appending message
+			byte_str = json.dumps(messages).encode('utf-8')
 			encryptor = cipher.encryptor()
-			needed_padding = 16 - (len(json.dumps(messages).encode('utf-8')) % 16)
-			enc = encryptor.update(json.dumps(messages).encode('utf-8') + str(needed_padding).encode('utf-8')*needed_padding) + encryptor.finalize()
+			# pad string to 16 bytes
+			padding_needed = 16 - (len(byte_str) % 16)
+			for _ in range(padding_needed):
+				byte_str += bytes([padding_needed])
+			enc = encryptor.update(byte_str) + encryptor.finalize()
 
 			f.seek(0)
 			f.write(enc)
 
 		return
+
+	def read_convo(self, other_user):
+		"""
+		Returns a list of Message objects between self.username and other_user
+		"""
+		try:
+			with open(f"messages_{self.username}_{other_user}", "rb") as f:
+				enc_data = f.read()
+			pw_padding = (16 - len(self.password)) * "a"
+			pw = self.password + pw_padding
+			cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
+
+			if len(enc_data) > 0:
+				# unpad text
+				enc_data = enc_data[:-enc_data[-1]]
+				decryptor = cipher.decryptor()
+				dec = decryptor.update(enc_data) + decryptor.finalize()
+			else:
+				# File is empty
+				dec = '{"messages": []}'
+
+			messages = [Message.from_dict(msg) for msg in json.loads(dec)]
+			return messages
+
+		except FileNotFoundError:
+			print(f"No conversation history for {self.username} and {other_user}")
+		except Exception as e:
+			print(f"Error decrypting message history!?!: {e}")
+
 
 	def check_inbox(self):
 		data = {'username': self.username, 'password': self.password, 'to_get': 'new'}
