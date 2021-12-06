@@ -160,7 +160,7 @@ class Client:
 
 			# Re-encrypt message store after appending message
 			encryptor = cipher.encryptor()
-			needed_padding = (len(json.dumps(messages).encode('utf-8')) % 16) + 16
+			needed_padding = 16 - (len(json.dumps(messages).encode('utf-8')) % 16)
 			enc = encryptor.update(json.dumps(messages).encode('utf-8') + str(needed_padding).encode('utf-8')*needed_padding) + encryptor.finalize()
 
 			f.seek(0)
