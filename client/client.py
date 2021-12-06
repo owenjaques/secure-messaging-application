@@ -77,6 +77,14 @@ class Client:
 		return requests.post(CONST_SERVER_URL + '/signup', data=data)
 
 	def send_text_message(self, to, text):
+		return self.send_message(to, text.encode('utf-8'), False)
+
+	def send_image_message(self, to, filename):
+		with open(filename, 'rb') as f:
+			b = f.read()
+		return self.send_message(to, b, True)
+
+	def send_message(self, to, byte_str, is_image):
 		r = requests.get(CONST_SERVER_URL + '/keybundle/' + to)
 		if r.status_code != 200:
 			raise Exception(r.text)
@@ -110,20 +118,9 @@ class Client:
 		cipher = Cipher(algorithms.AES(shared_key), modes.CBC(b'\0'*16))
 		encryptor = cipher.encryptor()
 
-		encode_text = text.encode('utf-8')
-		while len(encode_text) % 16 != 0:
-			encode_text += b'\0'
-		cipher_text = encryptor.update(encode_text) + encryptor.finalize()
-
-		# send the encrypted text as well as the eph key to the server
-		# data = {}
-		# data['from'] = self.username
-		# data['identity_key'] = self.id_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
-		# data['ephemeral_key'] = eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex()
-		# data['to'] = to
-		# data['prekey_index'] = key_bundle['prekey_idx']
-		# data['message'] = cipher_text
-		# data['is_image'] = False
+		while len(byte_str) % 16 != 0:
+			byte_str += b'\0'
+		cipher_text = encryptor.update(byte_str) + encryptor.finalize()
 
 		msg = Message(
 			recepient=to,
@@ -132,7 +129,7 @@ class Client:
 			ephemeral_key=eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
 			ciphertext=cipher_text.hex(),
 			pk_idx=key_bundle['prekey_idx'],
-			is_image=False
+			is_image=is_image
 		)
 
 		return requests.post(CONST_SERVER_URL + '/send', data=msg.to_dict())
@@ -178,7 +175,7 @@ class Client:
 		
 		bundle = json.loads(r.text)
 		for message in bundle:
-			plaintext = self.decrypt_message(message)
+			plaintext, is_image = self.decrypt_message(message)
 			msg = Message.from_dict(message)
 			self.save_message(msg)
 			print('New message from ' + message['sender'] + ': ' + plaintext)
@@ -208,10 +205,17 @@ class Client:
 		decryptor = cipher.decryptor()
 		byte_text = decryptor.update(cipher_text) + decryptor.finalize()
 		
-		# unpad and decode text
-		text = byte_text.split(b'\0')[0].decode('utf-8')
+		# unpad text
+		byte_text = byte_text.split(b'\0')[0]
+		
+		if message['is_image']:
+			with open('attachement.png', 'wb') as f:
+				f.write(byte_text)
+				text = 'attachement.png'
+		else:
+			text = byte_text.decode('utf-8')
 
-		return text
+		return text, message['is_image']
 
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
@@ -254,5 +258,6 @@ if __name__ == '__main__':
 	alice = Client()
 	bob = Client()
 	bob.send_text_message('alice', 'this is a test')
+	bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
 	pass
