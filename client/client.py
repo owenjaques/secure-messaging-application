@@ -136,7 +136,7 @@ class Client:
 
 	def save_message(self, msg):
 		# Decrypt/create message store
-		file_name = f"messages_{self.username}.json"
+		file_name = f"messages_{msg.recepient}_{msg.sender}.json"
 
 		with open(file_name, 'wb+') as f:
 			enc_data = f.read()
