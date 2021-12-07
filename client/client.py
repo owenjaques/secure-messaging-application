@@ -17,6 +17,7 @@ import json
 import requests
 import os
 from os import path
+from pathlib import Path
 import io
 from copy import copy
 from PIL import Image
@@ -54,7 +55,7 @@ class Client:
 		if len(messages) == 0:
 			print(f"No conversation history for {other_user}")
 		else:
-			messages.sort(key=lambda x: x.timestamp)
+			messages.sort(key=lambda x: x.timestamp or 0)
 			for msg in messages:
 				img_idx = 0
 				send_dir = 'Sent:' if msg.sender == self.username else 'Received:'
@@ -65,6 +66,8 @@ class Client:
 					img_idx += 1
 				else:
 					pt = bytes.fromhex(msg.plaintext) if type(msg.plaintext) == bytes else msg.plaintext
+					if pt.isnumeric():
+						pt = bytes.fromhex(pt).decode('utf-8')
 					print(f"{msg.timestamp or ''}		{send_dir} {pt}")
 
 	def generate_keys(self):
@@ -176,17 +179,19 @@ class Client:
 		# Decrypt/create message store
 		file_name = f"messages_{self.username}.json"
 
-		with open(file_name, 'wb+') as f:
+		if not path.exists(file_name):
+			Path(file_name).touch()
+
+		with open(file_name, 'rb+') as f:
 			enc_data = f.read()
 			pw_padding = (16 - len(self.password)) * "a"
 			pw = self.password + pw_padding
 			cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
 
 			if len(enc_data) > 0:
-				# unpad text
-				enc_data = enc_data[:-enc_data[-1]]
 				decryptor = cipher.decryptor()
 				dec = decryptor.update(enc_data) + decryptor.finalize()
+				dec = dec[:-dec[-1]]
 			else:
 				# File is empty
 				dec = '{"messages": []}'
