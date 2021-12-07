@@ -47,7 +47,7 @@ def keybundle(username):
     if user:
         return jsonify(user.get_keybundle())
     else:
-        return Response(f"User {username} not found")
+        return Response(f"User {username} not found", status=404)
     
 @app.route("/send", methods=["POST"])
 def send_message():
@@ -146,6 +146,29 @@ def check_inbox():
     except Exception as e:
         print(e)
 
+@app.route("/delete_user", methods=["POST"])
+def delete_user():
+    """
+    POST params:
+        Username
+        Password
+    """
+    try:
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = store.get_user(username)
+        try:
+            user.validate_password(password)
+        except Exception:
+            return Response("Invalid password", status=401)
+
+        store.delete_user(username)
+    
+    except Exception as e:
+        print(e)
+
+    return Response('User deleted successfully.', status=200)
 
 if __name__ == "__main__":
     app.run(port=5000)

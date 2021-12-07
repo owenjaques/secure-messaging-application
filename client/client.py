@@ -15,6 +15,7 @@ sending/receiving messages. Implementing this is out of scope for this prototype
 
 import json
 import requests
+import os
 from os import path
 import io
 from copy import copy
@@ -257,10 +258,10 @@ class Client:
 			message['plaintext'] = plaintext
 			msg = Message.from_dict(message)
 			self.save_message(msg)
-			if message['is_image'] != 'False':
-				print(f'New picture message from {message["sender"]}')
-			else:
+			if not message['is_image'] or message['is_image'] == 'False':
 				print('New message from ' + message['sender'] + ': ' + plaintext)
+			else:
+				print(f'New picture message from {message["sender"]}')
 
 	def decrypt_message(self, message):
 		"""
@@ -294,10 +295,20 @@ class Client:
 		padding_used = byte_text[-1]
 		byte_text = byte_text[:-padding_used]
 		
-		if message['is_image'] == 'False':
+		if not message['is_image'] or message['is_image'] == 'False':
 			return byte_text.decode('utf-8')
 		else:
 			return byte_text
+
+	def delete_self(self):
+		"""
+		Sends a request to the server to delete all of its data on the user as well as clears local message history.
+		"""
+		filename = 'messages_' + self.username + '.json'
+		if os.path.exists(filename):
+			os.remove(filename)
+
+		return requests.post(CONST_SERVER_URL + '/delete_user', data={'username': self.username, 'password': self.password})
 
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
@@ -344,4 +355,7 @@ if __name__ == '__main__':
 	alice.check_inbox()
 	#alice.conversation_history('bob')
 	bob.conversation_history('alice')
+	bob.delete_self()
+	alice.send_text_message('bob', 'this should not arrive')
+
 	pass
