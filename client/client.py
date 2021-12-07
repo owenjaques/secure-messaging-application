@@ -64,6 +64,9 @@ class Client:
 					print(f"{msg.timestamp}		{send_dir} {msg.ciphertext} {str(img_idx)}")
 
 	def generate_keys(self):
+		"""
+		Generates all relevant keys to be used for the lifetime of the client.
+		"""
 		self.sign_id_key = Ed25519PrivateKey.generate()
 		self.pk_sig = X25519PrivateKey.generate()
 
@@ -78,6 +81,9 @@ class Client:
 			self.ot_pks.append(X25519PrivateKey.generate())
 
 	def publish_keys(self):
+		"""
+		Publishes all keys needed by the X3DF protocol to the server.
+		"""
 		data = {}
 		data['username'] = self.username
 		data['password'] = self.password
@@ -91,14 +97,23 @@ class Client:
 		return requests.post(CONST_SERVER_URL + '/signup', data=data)
 
 	def send_text_message(self, to, text):
+		"""
+		Sends a text message to another user.
+		"""
 		return self.send_message(to, text.encode('utf-8'), False)
 
 	def send_image_message(self, to, filename):
+		"""
+		Sends an image loaded from disk to another user.
+		"""
 		with open(filename, 'rb') as f:
 			b = f.read()
 		return self.send_message(to, b, True)
 
 	def send_message(self, to, byte_str, is_image):
+		"""
+		Encrypts a message to be sent to another user using X3DF then sends it to the server.
+		"""
 		r = requests.get(CONST_SERVER_URL + '/keybundle/' + to)
 		if r.status_code != 200:
 			raise Exception(r.text)
@@ -221,6 +236,9 @@ class Client:
 
 
 	def check_inbox(self):
+		"""
+		Checks the client's inbox on the server for any messages.
+		"""
 		data = {'username': self.username, 'password': self.password, 'to_get': 'new'}
 		r = requests.post(CONST_SERVER_URL + '/inbox', data=data)
 		if r.status_code != 200:
@@ -235,9 +253,12 @@ class Client:
 				print(f'New picture message from {message["sender"]}')
 			else:
 				print('New message from ' + message['sender'] + ': ' + plaintext)
-			#TODO build Message object, pass to save_message
 
 	def decrypt_message(self, message):
+		"""
+		Decrypts the ciphertext in a given message object and returns the resulting plaintext. If the message is
+		an image it will leave the plaintext as a byte sequence but if it is a normal text it will put it in utf-8.
+		"""
 		cipher_text = bytes.fromhex(message['ciphertext'])
 		eph_key = X25519PublicKey.from_public_bytes(bytes.fromhex(message['ephemeral_key']))
 		sender_id_key = X25519PublicKey.from_public_bytes(bytes.fromhex(message['sender_identity_key']))
@@ -265,14 +286,10 @@ class Client:
 		padding_used = byte_text[-1]
 		byte_text = byte_text[:-padding_used]
 		
-		if message['is_image']:
-			with open('attachement.png', 'wb') as f:
-				f.write(byte_text)
-				text = 'attachement.png'
+		if not message['is_image']:
+			return byte_text.decode('utf-8')
 		else:
-			text = byte_text.decode('utf-8')
-
-		return text
+			return byte_text
 
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
