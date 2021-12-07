@@ -349,14 +349,35 @@ end of borrowed functions from https://github.com/pyca/cryptography/issues/5557
 """
 
 if __name__ == '__main__':
+	### end-to-end-test ###
+
+	# create two clients
 	alice = Client('alice', 'test')
 	bob = Client('bob', 'test')
-	bob.send_text_message('alice', 'this is a test')
-	bob.send_text_message('alice', 'this is a test2')
-	bob.send_text_message('alice', 'this is a test3')
-	#bob.send_image_message('alice', 'test_img.png')
+
+	# bob sends alice several messages (wow chill out Bob)
+	bob.send_text_message('alice', 'hey')
+	bob.send_text_message('alice', 'hey Alice')
+	bob.send_text_message('alice', 'Alice answer me!')
+
+	# alice checks her inbox and responds
 	alice.check_inbox()
+	alice.send_text_message('bob', 'leave me alone Bob')
+
+	# bob callously sends a picture in reply
+	bob.check_inbox()
+	bob.send_image_message('alice', 'test_img.png')
+
+	# alice checks her inbox and sees that there is an image
+	alice.check_inbox()
+
+	# she checks her conversation history to see what it is
 	alice.conversation_history('bob')
-	#bob.conversation_history('alice')
+
+	# alice deletes her conversation with bob then makes sure its gone
+	# TODO add
+	alice.conversation_history('bob')
+	
+
 
 	pass
