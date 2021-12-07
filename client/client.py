@@ -274,6 +274,7 @@ class Client:
 			else:
 				# File is empty
 				dec = '{"messages": []}'
+				raise Exception('user conversation not found')
 
 			messages = []
 			for message in json.loads(dec.decode('utf-8'))['messages']:
@@ -414,13 +415,16 @@ if __name__ == '__main__':
 	# alice checks her inbox and sees that there is an image
 	alice.check_inbox()
 
-	# she checks her conversation history to see what it is
+	# she checks her conversation history to see what the image is
+	# (check out the messages_alice.json file to see how they are kept encrypted at rest!)
 	alice.conversation_history('bob')
 
 	# alice deletes her conversation with bob then makes sure its gone
-	# TODO add
-	alice.conversation_history('bob')
-	
+	alice.delete_convo('bob')
+	try:
+		alice.conversation_history('bob')
+	except Exception as e:
+		print(e)
 
-
+	### end of test ###
 	pass
