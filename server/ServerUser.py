@@ -91,6 +91,9 @@ class UserStore:
         
         return None
 
+    def delete_user(self, username):
+        del self._userstore[username]
+
     def get_all_users(self):
         """
         Returns a dict of all users objects

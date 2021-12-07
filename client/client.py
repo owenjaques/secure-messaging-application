@@ -15,6 +15,7 @@ sending/receiving messages. Implementing this is out of scope for this prototype
 
 import json
 import requests
+import os
 from os import path
 import io
 from PIL import Image
@@ -291,6 +292,16 @@ class Client:
 		else:
 			return byte_text
 
+	def delete_self(self):
+		"""
+		Sends a request to the server to delete all of its data on the user as well as clears local message history.
+		"""
+		filename = 'messages_' + self.username + '.json'
+		if os.path.exists(filename):
+			os.remove(filename)
+
+		return requests.post(CONST_SERVER_URL + '/delete_user', data={'username': self.username, 'password': self.password})
+
 """
 unfortunately conversion between ed25519 keys and x25519 keys is not directly supported in the cryptography library yet so these next two 
 functions were generously provided by @reaperhulk and @chrysn in an issue thread (https://github.com/pyca/cryptography/issues/5557) 
@@ -336,4 +347,7 @@ if __name__ == '__main__':
 	alice.check_inbox()
 	#alice.conversation_history('bob')
 	bob.conversation_history('alice')
+	bob.delete_self()
+	alice.send_text_message('bob', 'this should not arrive')
+
 	pass
