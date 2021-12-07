@@ -254,10 +254,10 @@ class Client:
 			plaintext = self.decrypt_message(message)
 			msg = Message.from_dict(message)
 			self.save_message(msg)
-			if message['is_image']:
-				print(f'New picture message from {message["sender"]}')
-			else:
+			if not message['is_image'] or message['is_image'] == 'False':
 				print('New message from ' + message['sender'] + ': ' + plaintext)
+			else:
+				print(f'New picture message from {message["sender"]}')
 
 	def decrypt_message(self, message):
 		"""
@@ -291,7 +291,7 @@ class Client:
 		padding_used = byte_text[-1]
 		byte_text = byte_text[:-padding_used]
 		
-		if not message['is_image']:
+		if not message['is_image'] or message['is_image'] == 'False':
 			return byte_text.decode('utf-8')
 		else:
 			return byte_text
@@ -347,7 +347,7 @@ if __name__ == '__main__':
 	alice = Client('alice', 'test')
 	bob = Client('bob', 'test')
 	bob.send_text_message('alice', 'this is a test')
-	bob.send_image_message('alice', 'test_img.png')
+	#bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
 	#alice.conversation_history('bob')
 	bob.conversation_history('alice')
