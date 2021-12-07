@@ -16,6 +16,8 @@ sending/receiving messages. Implementing this is out of scope for this prototype
 import json
 import requests
 from os import path
+import io
+from PIL import Image
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
@@ -44,6 +46,22 @@ class Client:
 		r = self.publish_keys()
 		if r.status_code != 200:
 			raise Exception(r.text)
+
+	def conversation_history(self, other_user):
+		messages = self.read_convo(other_user)
+		if len(messages) == 0:
+			print(f"No conversation history for {other_user}")
+		else:
+			messages.sort(key=lambda x: x.timestamp)
+			for msg in messages:
+				img_idx = 0
+				send_dir = '>' if msg.sender == self.username else '<'
+				if msg.is_image:
+					print(f"{msg.timestamp}		{send_dir} Image {str(img_idx)}")
+					image = Image.open(io.BytesIO(msg.ciphertext))
+					image.show()
+				else:
+					print(f"{msg.timestamp}		{send_dir} {msg.ciphertext} {str(img_idx)}")
 
 	def generate_keys(self):
 		self.sign_id_key = Ed25519PrivateKey.generate()
@@ -130,11 +148,12 @@ class Client:
 			is_image=is_image
 		)
 
+		self.save_message(msg)
 		return requests.post(CONST_SERVER_URL + '/send', data=msg.to_dict())
 
 	def save_message(self, msg):
 		# Decrypt/create message store
-		file_name = f"messages_{msg.recepient}_{msg.sender}.json"
+		file_name = f"messages_{self.username}.json"
 
 		with open(file_name, 'wb+') as f:
 			enc_data = f.read()
@@ -177,7 +196,7 @@ class Client:
 		Returns a list of Message objects between self.username and other_user
 		"""
 		try:
-			with open(f"messages_{self.username}_{other_user}", "rb") as f:
+			with open(f"messages_{self.username}.json", "rb") as f:
 				enc_data = f.read()
 			pw_padding = (16 - len(self.password)) * "a"
 			pw = self.password + pw_padding
@@ -192,7 +211,7 @@ class Client:
 				# File is empty
 				dec = '{"messages": []}'
 
-			messages = [Message.from_dict(msg) for msg in json.loads(dec)]
+			messages = [Message.from_dict(msg) for msg in json.loads(dec.decode('utf-8')) if other_user in [msg.sender, msg.recipient]]
 			return messages
 
 		except FileNotFoundError:
@@ -295,7 +314,9 @@ end of borrowed functions from https://github.com/pyca/cryptography/issues/5557
 if __name__ == '__main__':
 	alice = Client('alice', 'test')
 	bob = Client('bob', 'test')
-	#bob.send_text_message('alice', 'this is a test')
+	bob.send_text_message('alice', 'this is a test')
 	bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
+	#alice.conversation_history('bob')
+	bob.conversation_history('alice')
 	pass
