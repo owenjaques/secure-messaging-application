@@ -1,7 +1,6 @@
 class MessageBox:
     """
     Holds Message objects for a given user
-    TODO: Store messages to disk, add from_file method
     """
     message_box_path = None
     _messages = []
