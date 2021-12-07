@@ -212,6 +212,49 @@ class Client:
 
 		return
 
+	def delete_convo(self, other_user):
+		"""
+		Returns a list of Message objects between self.username and other_user
+		"""
+		try:
+			with open(f"messages_{self.username}.json", "wb+") as f:
+				enc_data = f.read()
+				pw_padding = (16 - len(self.password)) * "a"
+				pw = self.password + pw_padding
+				cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
+
+				if len(enc_data) > 0:
+					decryptor = cipher.decryptor()
+					dec = decryptor.update(enc_data) + decryptor.finalize()
+					# unpad text
+					dec = dec[:-dec[-1]]
+				else:
+					# File is empty
+					return
+
+				messages = []
+				for message in json.loads(dec.decode('utf-8'))['messages']:
+					msg = Message.from_dict(message)
+					if other_user not in [msg.recepient, msg.sender]:
+						messages.append(msg)
+
+
+				# Re-encrypt message store after appending message
+				byte_str = json.dumps(messages).encode('utf-8')
+				encryptor = cipher.encryptor()
+				# pad string to 16 bytes
+				padding_needed = 16 - (len(byte_str) % 16)
+				for _ in range(padding_needed):
+					byte_str += bytes([padding_needed])
+				enc = encryptor.update(byte_str) + encryptor.finalize()
+
+				f.seek(0)
+				f.write(enc)
+
+
+		except FileNotFoundError:
+			print(f"No conversation history for {self.username} and {other_user}")
+
 	def read_convo(self, other_user):
 		"""
 		Returns a list of Message objects between self.username and other_user
@@ -354,9 +397,8 @@ if __name__ == '__main__':
 	bob.send_text_message('alice', 'this is a test')
 	bob.send_text_message('alice', 'this is a test2')
 	bob.send_text_message('alice', 'this is a test3')
-	#bob.send_image_message('alice', 'test_img.png')
+	bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
 	alice.conversation_history('bob')
-	#bob.conversation_history('alice')
 
 	pass
