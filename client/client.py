@@ -65,7 +65,7 @@ class Client:
 					img_idx += 1
 				else:
 					pt = bytes.fromhex(msg.plaintext) if type(msg.plaintext) == bytes else msg.plaintext
-					if pt.isnumeric():
+					if pt[0].isnumeric() or pt[-1].isnumeric():
 						pt = bytes.fromhex(pt).decode('utf-8')
 					print(f"{send_dir} {pt}")
 
