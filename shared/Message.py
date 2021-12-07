@@ -13,13 +13,14 @@ class Message():
     is_image: bool = False
     timestamp: str = None
     read: bool = False
+    plaintext: str = None
 
     def view(self):
         self.read = True
         return self
 
     def to_dict(self):
-        return {
+        d = {
             "recepient": self.recepient,
             "sender": self.sender,
             "sender_identity_key": self.sender_identity_key,
@@ -28,8 +29,11 @@ class Message():
             "pk_idx": self.pk_idx,
             "is_image": self.is_image,
             "timestamp": self.timestamp,
-            "read": self.read
+            "read": self.read,
+            "plaintext": self.plaintext
         }
+
+        return d
 
     @staticmethod
     def from_dict(d):
@@ -42,5 +46,6 @@ class Message():
 			pk_idx=d["pk_idx"],
             timestamp=d.get("timestamp"),
 			is_image= d.get("is_image") or False,
-            read= d.get("read") or False
+            read= d.get("read") or False,
+            plaintext = d.get("plaintext")
         )

@@ -17,6 +17,7 @@ import json
 import requests
 from os import path
 import io
+from copy import copy
 from PIL import Image
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
@@ -57,12 +58,12 @@ class Client:
 				img_idx = 0
 				send_dir = '>' if msg.sender == self.username else '<'
 				if msg.is_image:
-					print(f"{msg.timestamp}		{send_dir} Image {str(img_idx)}")
-					img_bytes = self.decrypt_message(msg.to_dict())
-					image = Image.open(io.BytesIO(img_bytes))
+					print(f"{msg.timestamp or ''}		{send_dir} Image {str(img_idx)}")
+					image = Image.open(io.BytesIO(bytes.fromhex(msg.plaintext)))
 					image.show()
+					img_idx += 1
 				else:
-					print(f"{msg.timestamp}		{send_dir} {msg.ciphertext} {str(img_idx)}")
+					print(f"{msg.timestamp or ''}		{send_dir} {bytes.fromhex(msg.plaintext).decode('utf-8')} {str(img_idx)}")
 
 	def generate_keys(self):
 		"""
@@ -145,14 +146,15 @@ class Client:
 		shared_key = HKDF(hashes.SHA256(), 32, b'\0'*32, b'shared key').derive(hkdf_input)
 
 		# pad string to 16 bytes
+		byte_str_padded = copy(byte_str)
 		padding_needed = 16 - (len(byte_str) % 16)
 		for _ in range(padding_needed):
-			byte_str += bytes([padding_needed])
+			byte_str_padded += bytes([padding_needed])
 		
 		# Finally encrypt the text with the computed shared key
 		cipher = Cipher(algorithms.AES(shared_key), modes.CBC(b'\0'*16))
 		encryptor = cipher.encryptor()
-		cipher_text = encryptor.update(byte_str) + encryptor.finalize()
+		cipher_text = encryptor.update(byte_str_padded) + encryptor.finalize()
 
 		msg = Message(
 			recepient=to,
@@ -161,7 +163,8 @@ class Client:
 			ephemeral_key=eph_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex(),
 			ciphertext=cipher_text.hex(),
 			pk_idx=key_bundle['prekey_idx'],
-			is_image=is_image
+			is_image=is_image,
+			plaintext=byte_str.hex()
 		)
 
 		self.save_message(msg)
@@ -236,8 +239,8 @@ class Client:
 
 		except FileNotFoundError:
 			print(f"No conversation history for {self.username} and {other_user}")
-		except Exception as e:
-			print(f"Error decrypting message history!?!: {e}")
+		# except Exception as e:
+		# 	print(f"Error decrypting message history!?!: {e}")
 
 	def check_inbox(self):
 		"""
@@ -251,9 +254,10 @@ class Client:
 		bundle = json.loads(r.text)
 		for message in bundle:
 			plaintext = self.decrypt_message(message)
+			message['plaintext'] = plaintext
 			msg = Message.from_dict(message)
 			self.save_message(msg)
-			if message['is_image']:
+			if message['is_image'] != 'False':
 				print(f'New picture message from {message["sender"]}')
 			else:
 				print('New message from ' + message['sender'] + ': ' + plaintext)
@@ -290,7 +294,7 @@ class Client:
 		padding_used = byte_text[-1]
 		byte_text = byte_text[:-padding_used]
 		
-		if not message['is_image']:
+		if message['is_image'] == 'False':
 			return byte_text.decode('utf-8')
 		else:
 			return byte_text
@@ -336,7 +340,7 @@ if __name__ == '__main__':
 	alice = Client('alice', 'test')
 	bob = Client('bob', 'test')
 	bob.send_text_message('alice', 'this is a test')
-	bob.send_image_message('alice', 'test_img.png')
+	#bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
 	#alice.conversation_history('bob')
 	bob.conversation_history('alice')

@@ -110,13 +110,12 @@ class UserStore:
         print(f"User {user.username} written to disk")
 
     def signup(self, user_dict):
-        if not self.get_user(user_dict['username']):
-            user = User.from_dict(user_dict)
-            self.write_user(user)
+        user = User.from_dict(user_dict)
+        self.write_user(user)
 
-            userstore_dict = {
-                user_dict["username"]:  user_dict
-            }
-            self._userstore.update(userstore_dict)
+        userstore_dict = {
+            user_dict["username"]:  user_dict
+        }
+        self._userstore.update(userstore_dict)
         
         
