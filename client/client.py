@@ -239,7 +239,6 @@ class Client:
 		except Exception as e:
 			print(f"Error decrypting message history!?!: {e}")
 
-
 	def check_inbox(self):
 		"""
 		Checks the client's inbox on the server for any messages.
