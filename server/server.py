@@ -29,7 +29,7 @@ def signup():
         pk_list = request.form.getlist("prekeys")
         prekeys = []
         for i in range(0, len(pk_list), 2):
-            prekeys.append((i, pk_list[i+1]))
+            prekeys.append((int(i/2), pk_list[i+1]))
         data["prekeys"] = prekeys
 
         for k,v in data.items():

@@ -57,14 +57,15 @@ class Client:
 			messages.sort(key=lambda x: x.timestamp)
 			for msg in messages:
 				img_idx = 0
-				send_dir = '>' if msg.sender == self.username else '<'
-				if msg.is_image:
+				send_dir = 'Sent:' if msg.sender == self.username else 'Received:'
+				if msg.is_image in ['True', True]:
 					print(f"{msg.timestamp or ''}		{send_dir} Image {str(img_idx)}")
 					image = Image.open(io.BytesIO(bytes.fromhex(msg.plaintext)))
 					image.show()
 					img_idx += 1
 				else:
-					print(f"{msg.timestamp or ''}		{send_dir} {bytes.fromhex(msg.plaintext).decode('utf-8')} {str(img_idx)}")
+					pt = bytes.fromhex(msg.plaintext) if type(msg.plaintext) == bytes else msg.plaintext
+					print(f"{msg.timestamp or ''}		{send_dir} {pt}")
 
 	def generate_keys(self):
 		"""
@@ -255,7 +256,7 @@ class Client:
 		bundle = json.loads(r.text)
 		for message in bundle:
 			plaintext = self.decrypt_message(message)
-			message['plaintext'] = plaintext
+			message['plaintext'] = plaintext.hex() if type(plaintext) == bytes else plaintext
 			msg = Message.from_dict(message)
 			self.save_message(msg)
 			if not message['is_image'] or message['is_image'] == 'False':
@@ -351,11 +352,11 @@ if __name__ == '__main__':
 	alice = Client('alice', 'test')
 	bob = Client('bob', 'test')
 	bob.send_text_message('alice', 'this is a test')
+	bob.send_text_message('alice', 'this is a test2')
+	bob.send_text_message('alice', 'this is a test3')
 	#bob.send_image_message('alice', 'test_img.png')
 	alice.check_inbox()
-	#alice.conversation_history('bob')
-	bob.conversation_history('alice')
-	bob.delete_self()
-	alice.send_text_message('bob', 'this should not arrive')
+	alice.conversation_history('bob')
+	#bob.conversation_history('alice')
 
 	pass
