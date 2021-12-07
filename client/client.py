@@ -55,12 +55,11 @@ class Client:
 		if len(messages) == 0:
 			print(f"No conversation history for {other_user}")
 		else:
-			messages.sort(key=lambda x: x.timestamp or 0)
 			for msg in messages:
 				img_idx = 0
 				send_dir = 'Sent:' if msg.sender == self.username else 'Received:'
 				if msg.is_image in ['True', True]:
-					print(f"{msg.timestamp or ''}		{send_dir} Image {str(img_idx)}")
+					print(f"{send_dir} Image {str(img_idx)}")
 					image = Image.open(io.BytesIO(bytes.fromhex(msg.plaintext)))
 					image.show()
 					img_idx += 1
@@ -68,7 +67,7 @@ class Client:
 					pt = bytes.fromhex(msg.plaintext) if type(msg.plaintext) == bytes else msg.plaintext
 					if pt.isnumeric():
 						pt = bytes.fromhex(pt).decode('utf-8')
-					print(f"{msg.timestamp or ''}		{send_dir} {pt}")
+					print(f"{send_dir} {pt}")
 
 	def generate_keys(self):
 		"""
