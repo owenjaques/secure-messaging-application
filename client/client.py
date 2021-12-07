@@ -58,7 +58,8 @@ class Client:
 				send_dir = '>' if msg.sender == self.username else '<'
 				if msg.is_image:
 					print(f"{msg.timestamp}		{send_dir} Image {str(img_idx)}")
-					image = Image.open(io.BytesIO(msg.ciphertext))
+					img_bytes = self.decrypt_message(msg.to_dict())
+					image = Image.open(io.BytesIO(img_bytes))
 					image.show()
 				else:
 					print(f"{msg.timestamp}		{send_dir} {msg.ciphertext} {str(img_idx)}")
@@ -203,15 +204,19 @@ class Client:
 			cipher = Cipher(algorithms.AES(bytearray(pw, 'utf-8')), modes.CBC(b'\0'*16))
 
 			if len(enc_data) > 0:
-				# unpad text
-				enc_data = enc_data[:-enc_data[-1]]
 				decryptor = cipher.decryptor()
 				dec = decryptor.update(enc_data) + decryptor.finalize()
+				# unpad text
+				dec = dec[:-dec[-1]]
 			else:
 				# File is empty
 				dec = '{"messages": []}'
 
-			messages = [Message.from_dict(msg) for msg in json.loads(dec.decode('utf-8')) if other_user in [msg.sender, msg.recipient]]
+			messages = []
+			for message in json.loads(dec.decode('utf-8'))['messages']:
+				msg = Message.from_dict(message)
+				if other_user == None or other_user in [msg.recepient, msg.sender]:
+					messages.append(msg)
 			return messages
 
 		except FileNotFoundError:
