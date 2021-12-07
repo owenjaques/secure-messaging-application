@@ -400,7 +400,7 @@ if __name__ == '__main__':
 	### end-to-end-test ###
 
 	# create two clients
-	alice = Client('alice', 'test')
+	alice = Client()
 	bob = Client('bob', 'test')
 
 	# bob sends alice several messages (wow chill out Bob)
@@ -427,6 +427,19 @@ if __name__ == '__main__':
 	alice.delete_convo('bob')
 	try:
 		alice.conversation_history('bob')
+	except Exception as e:
+		print(e)
+
+	# unfortunately this does not prevent bob from sending her another message
+	bob.send_text_message('alice', 'get beaned lol')
+
+	# alice leaves the platform making it so that bob cannot message her anymore and presumably makes a new account
+	alice.check_inbox()
+	alice.delete_self()
+
+	# bob tries to message her but is prevented
+	try:
+		bob.send_text_message('alice', 'hey alice what you up to tonight?')
 	except Exception as e:
 		print(e)
 
