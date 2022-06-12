@@ -2,4 +2,4 @@
 
 Assignment 3 of SENG 360
 
-Please check out the [wiki](wiki/Home) for more about this app.
+Please check out the [wiki](wiki/home.md) for more about this app.
